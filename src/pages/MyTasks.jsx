@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { taskService } from '../services/taskService';
 import { Link } from 'react-router-dom';
 
 export default function MyTasks() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [tasksPerPage] = useState(10);
+
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['myTasks'],
     queryFn: taskService.getMyTasks
@@ -15,6 +19,14 @@ export default function MyTasks() {
     CRITICAL: 'bg-red-100 text-red-700'
   };
 
+  // Pagination
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const currentTasks = tasks?.slice(indexOfFirstTask, indexOfLastTask);
+  const totalPages = Math.ceil((tasks?.length || 0) / tasksPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64">Loading...</div>;
   }
@@ -23,7 +35,7 @@ export default function MyTasks() {
     <div>
       <h1 className="text-3xl font-bold text-gray-800 mb-6">My Tasks</h1>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
@@ -36,7 +48,7 @@ export default function MyTasks() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {tasks?.map(task => (
+              {currentTasks?.map(task => (
                 <tr key={task.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div>
@@ -69,6 +81,44 @@ export default function MyTasks() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t px-6 py-4 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {indexOfFirstTask + 1} to {Math.min(indexOfLastTask, tasks?.length || 0)} of {tasks?.length || 0} tasks
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index + 1}
+                  onClick={() => paginate(index + 1)}
+                  className={`px-3 py-1 border rounded ${
+                    currentPage === index + 1
+                      ? 'bg-primary-600 text-white'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

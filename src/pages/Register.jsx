@@ -21,8 +21,8 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(formData);
-      alert('Registration successful! Please login.');
+      const response = await register(formData);
+      alert(response.message || 'Registration successful! Please login.');
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');

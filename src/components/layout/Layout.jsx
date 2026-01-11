@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FiHome, FiFolder, FiCheckSquare, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiFolder, FiCheckSquare, FiUsers, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { useState } from 'react';
 
 export default function Layout() {
@@ -13,10 +13,15 @@ export default function Layout() {
     navigate('/login');
   };
 
+  const isAdmin = user?.roles?.includes('ROLE_ADMIN');
+  const isProductOwner = user?.roles?.includes('ROLE_PRODUCT_OWNER');
+
   const menuItems = [
     { path: '/', icon: FiHome, label: 'Dashboard' },
     { path: '/projects', icon: FiFolder, label: 'Projects' },
     { path: '/my-tasks', icon: FiCheckSquare, label: 'My Tasks' },
+    ...(isAdmin ? [{ path: '/users', icon: FiUsers, label: 'Users' }] : []),
+    ...(isProductOwner ? [{ path: '/users', icon: FiUsers, label: 'Users' }] : []),
   ];
 
   return (

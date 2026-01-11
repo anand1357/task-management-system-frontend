@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +10,7 @@ export default function Login() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -64,7 +64,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
+                Username or Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -76,7 +76,7 @@ export default function Login() {
                   value={formData.username}
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  placeholder="Enter your username"
+                  placeholder="Enter username or email"
                   required
                   autoComplete="username"
                 />
@@ -123,6 +123,15 @@ export default function Login() {
             </button>
           </form>
 
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setShowForgotPassword(true)}
+              className="text-sm text-primary-600 hover:text-primary-700 hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </div>
+
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
@@ -142,6 +151,95 @@ export default function Login() {
             </p>
           </div>
         </div>
+      </div>
+      
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />
+      )}
+    </div>
+  );
+}
+
+// Forgot Password Modal Component
+function ForgotPasswordModal({ onClose }) {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password?email=${email}`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        setMessage(data.message);
+        setTimeout(() => onClose(), 3000);
+      } else {
+        setError(data.message || 'Failed to send reset email');
+      }
+    } catch (err) {
+      setError('Failed to send reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-md p-6">
+        <h2 className="text-xl font-bold mb-4">Forgot Password</h2>
+        
+        {message && (
+          <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-sm">
+            {message}
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            >
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
